@@ -11,12 +11,14 @@ import (
 // Handler handles HTTP requests
 type Handler struct {
 	searchService *service.SearchService
+	apiKey        string
 }
 
 // NewHandler creates a new HTTP handler
-func NewHandler(searchService *service.SearchService) *Handler {
+func NewHandler(searchService *service.SearchService, apiKey string) *Handler {
 	return &Handler{
 		searchService: searchService,
+		apiKey:        apiKey,
 	}
 }
 
@@ -31,6 +33,21 @@ type SearchResponse struct {
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Validate API key
+	apiKey := r.Header.Get("X-API-Key")
+	if apiKey == "" {
+		// Try Authorization header with Bearer token
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+			apiKey = authHeader[7:]
+		}
+	}
+
+	if apiKey == "" || apiKey != h.apiKey {
+		http.Error(w, "Unauthorized: Invalid or missing API key", http.StatusUnauthorized)
 		return
 	}
 

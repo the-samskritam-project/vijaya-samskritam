@@ -14,6 +14,7 @@ type Config struct {
 	MongoURI       string
 	Port           string
 	ScoreThreshold float64
+	APIKey         string
 }
 
 // Load loads configuration from environment variables
@@ -38,10 +39,16 @@ func Load() (*Config, error) {
 		}
 	}
 
+	apiKey := os.Getenv("SEARCH_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("SEARCH_API_KEY environment variable is required")
+	}
+
 	return &Config{
 		MongoURI:       mongoURI,
 		Port:           getEnv("PORT", "8080"),
 		ScoreThreshold: scoreThreshold,
+		APIKey:         apiKey,
 	}, nil
 }
 
